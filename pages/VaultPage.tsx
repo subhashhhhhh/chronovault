@@ -5,7 +5,7 @@ import { VaultNFT } from '../components/VaultNFT';
 import { AlertTriangle, Lock, Unlock } from '../components/ui/Icons';
 
 export const VaultPage = () => {
-    const { user, stats } = useVault();
+    const { user, stats, refreshData } = useVault();
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -16,7 +16,17 @@ export const VaultPage = () => {
                         <Lock className="w-5 h-5 text-defi-accent" />
                         Vault Operations
                     </h2>
-                    <DepositWithdraw />
+                    {user && stats ? (
+                        <DepositWithdraw
+                            user={user}
+                            stats={stats}
+                            onUpdate={refreshData}
+                        />
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            Please connect your wallet to access vault operations.
+                        </div>
+                    )}
                 </div>
             </div>
 

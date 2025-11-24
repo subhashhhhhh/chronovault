@@ -40,7 +40,7 @@ export const EarningsChart: React.FC<EarningsChartProps> = ({ principal, apy, da
     };
 
     return (
-        <div className="w-full h-[300px] bg-black border border-defi-800 p-4 relative overflow-hidden group">
+        <div className="w-full h-[300px] bg-black border border-defi-800 p-4 relative overflow-hidden group flex flex-col">
             {/* Cyber Decoration */}
             <div className="absolute top-0 right-0 p-2 flex gap-1">
                 <div className="w-1 h-1 bg-defi-accent"></div>
@@ -48,52 +48,54 @@ export const EarningsChart: React.FC<EarningsChartProps> = ({ principal, apy, da
                 <div className="w-1 h-1 bg-defi-accent opacity-25"></div>
             </div>
 
-            <h3 className="text-sm font-mono text-gray-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-mono text-gray-400 mb-4 uppercase tracking-wider flex items-center gap-2 shrink-0">
                 <span className="w-2 h-2 bg-defi-accent rounded-full animate-pulse"></span>
                 Projected Yield Curve
             </h3>
 
-            <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
-                    <defs>
-                        <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
-                        </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    <XAxis
-                        dataKey="month"
-                        stroke="#666"
-                        tick={{ fill: '#666', fontSize: 10, fontFamily: 'monospace' }}
-                        tickLine={false}
-                        axisLine={false}
-                    />
-                    <YAxis
-                        stroke="#666"
-                        tick={{ fill: '#666', fontSize: 10, fontFamily: 'monospace' }}
-                        tickFormatter={(value) => `$${value / 1000}k`}
-                        tickLine={false}
-                        axisLine={false}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area
-                        type="monotone"
-                        dataKey="balance"
-                        stroke="#dc2626"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorBalance)"
-                    />
-                    <Area
-                        type="step"
-                        dataKey="principal"
-                        stroke="#333"
-                        strokeDasharray="5 5"
-                        fill="none"
-                    />
-                </AreaChart>
-            </ResponsiveContainer>
+            <div className="flex-1 min-h-0 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data}>
+                        <defs>
+                            <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                        <XAxis
+                            dataKey="month"
+                            stroke="#666"
+                            tick={{ fill: '#666', fontSize: 10, fontFamily: 'monospace' }}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <YAxis
+                            stroke="#666"
+                            tick={{ fill: '#666', fontSize: 10, fontFamily: 'monospace' }}
+                            tickFormatter={(value) => `$${value / 1000}k`}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Area
+                            type="monotone"
+                            dataKey="balance"
+                            stroke="#dc2626"
+                            strokeWidth={2}
+                            fillOpacity={1}
+                            fill="url(#colorBalance)"
+                        />
+                        <Area
+                            type="step"
+                            dataKey="principal"
+                            stroke="#333"
+                            strokeDasharray="5 5"
+                            fill="none"
+                        />
+                    </AreaChart>
+                </ResponsiveContainer>
+            </div>
         </div>
     );
 };
