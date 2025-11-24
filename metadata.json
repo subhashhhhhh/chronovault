@@ -1,0 +1,5 @@
+{
+  "name": "Time-Locked Savings Vault",
+  "description": "A decentralized finance (DeFi) prototype allowing users to deposit ERC-20 tokens, earn interest, and manage time-locked savings with early withdrawal penalties.",
+  "requestFramePermissions": []
+}
