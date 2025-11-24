@@ -4,12 +4,17 @@ import { StatsCard } from '../components/StatsCard';
 import { EarningsChart } from '../components/EarningsChart';
 import { Lock, TrendingUp, Wallet, Clock } from '../components/ui/Icons';
 
+import { Faucet } from '../components/Faucet';
+
 export const DashboardHome = () => {
     const { stats, user } = useVault();
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-white uppercase tracking-tight">Dashboard Overview</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-white uppercase tracking-tight">Dashboard Overview</h1>
+                <Faucet />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatsCard
@@ -31,7 +36,7 @@ export const DashboardHome = () => {
                 />
                 <StatsCard
                     title="Next Unlock"
-                    value={user?.deposit ? `${Math.ceil((user.deposit.unlockDate - Date.now()) / (1000 * 60 * 60 * 24))} Days` : 'N/A'}
+                    value={user?.deposits && user.deposits.length > 0 ? `${Math.ceil((user.deposits[0].unlockDate - Date.now()) / (1000 * 60 * 60 * 24))} Days` : 'N/A'}
                     icon={Clock}
                 />
             </div>
@@ -40,9 +45,9 @@ export const DashboardHome = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <EarningsChart
-                        principal={user?.deposit?.amount || 10000}
+                        principal={user?.deposits && user.deposits.length > 0 ? user.deposits[0].amount : 10000}
                         apy={stats.apy}
-                        days={user?.deposit ? Math.ceil((user.deposit.unlockDate - Date.now()) / (1000 * 60 * 60 * 24)) : 365}
+                        days={user?.deposits && user.deposits.length > 0 ? Math.ceil((user.deposits[0].unlockDate - Date.now()) / (1000 * 60 * 60 * 24)) : 365}
                     />
                 </div>
 

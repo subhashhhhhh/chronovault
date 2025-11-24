@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { useVault } from '../context/VaultContext';
 import { VaultStats, UserAccount, Deposit, TransactionState, TransactionStatus } from '../types';
-import { MockChainService } from '../services/mockChain';
 import { ArrowRight, ArrowLeft, AlertTriangle, Lock, Unlock, CheckCircle, AlertCircle, Clock, History } from './ui/Icons';
 import { Modal } from './ui/Modal';
 
@@ -14,7 +14,7 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [amount, setAmount] = useState<string>('');
   const [txState, setTxState] = useState<TransactionState>({ status: TransactionStatus.IDLE });
-  
+
   // Withdrawal Modal State
   const [depositToWithdraw, setDepositToWithdraw] = useState<Deposit | null>(null);
   const [acknowledgePenalty, setAcknowledgePenalty] = useState(false);
@@ -24,10 +24,12 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
   const ITEMS_PER_PAGE = 5;
 
   // Deposit Logic
+  const { approve, deposit, withdraw } = useVault();
+
   const handleApprove = async () => {
     try {
       setTxState({ status: TransactionStatus.PENDING, message: 'APPROVING TOKEN...' });
-      await MockChainService.approveToken(Number(amount));
+      await approve(Number(amount));
       setTxState({ status: TransactionStatus.SUCCESS, message: 'APPROVAL SUCCESSFUL' });
       onUpdate();
       setTimeout(() => setTxState({ status: TransactionStatus.IDLE }), 2000);
@@ -39,7 +41,7 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
   const handleDeposit = async () => {
     try {
       setTxState({ status: TransactionStatus.PENDING, message: 'DEPOSITING FUNDS...' });
-      await MockChainService.deposit(Number(amount));
+      await deposit(Number(amount));
       setTxState({ status: TransactionStatus.SUCCESS, message: 'DEPOSIT SUCCESSFUL' });
       setAmount('');
       onUpdate();
@@ -62,10 +64,10 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
     try {
       setTxState({ status: TransactionStatus.PENDING, message: 'WITHDRAWING...' });
       // Close modal immediately so we can show status in the main panel
-      const depositId = depositToWithdraw.id;
+      const depositId = Number(depositToWithdraw.id);
       setDepositToWithdraw(null);
-      
-      await MockChainService.withdraw(depositId);
+
+      await withdraw(depositId);
       setTxState({ status: TransactionStatus.SUCCESS, message: 'WITHDRAWAL SUCCESSFUL' });
       onUpdate();
       setTimeout(() => setTxState({ status: TransactionStatus.IDLE }), 3000);
@@ -82,10 +84,10 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
   const getUnlockDate = () => {
     const now = Date.now();
     const unlockTime = now + (stats.lockPeriodDays * 24 * 60 * 60 * 1000);
-    return new Date(unlockTime).toLocaleDateString(undefined, { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return new Date(unlockTime).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -96,7 +98,7 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
     const isEarly = now < deposit.unlockDate;
     const penalty = isEarly ? deposit.amount * stats.penaltyRate : 0;
     const netReturn = deposit.amount + deposit.accruedInterest - penalty;
-    
+
     return { isEarly, penalty, netReturn };
   };
 
@@ -116,21 +118,19 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
         <div className="flex border-b border-defi-700">
           <button
             onClick={() => setActiveTab('deposit')}
-            className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${
-              activeTab === 'deposit' 
-                ? 'text-white bg-defi-800 border-r border-defi-700' 
-                : 'text-gray-500 hover:text-white hover:bg-defi-900 border-r border-defi-800'
-            }`}
+            className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'deposit'
+              ? 'text-white bg-defi-800 border-r border-defi-700'
+              : 'text-gray-500 hover:text-white hover:bg-defi-900 border-r border-defi-800'
+              }`}
           >
             Deposit
           </button>
           <button
             onClick={() => setActiveTab('withdraw')}
-            className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${
-              activeTab === 'withdraw' 
-                ? 'text-white bg-defi-800 border-l border-defi-700' 
-                : 'text-gray-500 hover:text-white hover:bg-defi-900'
-            }`}
+            className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'withdraw'
+              ? 'text-white bg-defi-800 border-l border-defi-700'
+              : 'text-gray-500 hover:text-white hover:bg-defi-900'
+              }`}
           >
             Withdraw
           </button>
@@ -139,11 +139,10 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
         <div className="p-8 bg-defi-800 min-h-[400px]">
           {/* Transaction Status Overlay/Banner */}
           {txState.status !== TransactionStatus.IDLE && (
-            <div className={`mb-6 p-4 border flex items-center gap-3 ${
-              txState.status === TransactionStatus.PENDING ? 'bg-black border-white text-white' :
+            <div className={`mb-6 p-4 border flex items-center gap-3 ${txState.status === TransactionStatus.PENDING ? 'bg-black border-white text-white' :
               txState.status === TransactionStatus.SUCCESS ? 'bg-success text-white border-success' :
-              'bg-danger text-white border-danger'
-            }`}>
+                'bg-danger text-white border-danger'
+              }`}>
               {txState.status === TransactionStatus.PENDING && <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />}
               {txState.status === TransactionStatus.SUCCESS && <CheckCircle className="h-5 w-5" />}
               {txState.status === TransactionStatus.ERROR && <AlertCircle className="h-5 w-5" />}
@@ -168,7 +167,7 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
                     className="w-full bg-black border border-defi-700 p-4 text-lg text-white placeholder-defi-600 focus:outline-none focus:border-defi-accent focus:ring-1 focus:ring-defi-accent font-mono transition-all"
                     disabled={txState.status === TransactionStatus.PENDING}
                   />
-                  <button 
+                  <button
                     onClick={() => setAmount(user.balance.toString())}
                     className="absolute right-3 top-3 bg-defi-700 hover:bg-white hover:text-black text-xs font-bold text-white px-3 py-2 uppercase transition-colors"
                   >
@@ -204,12 +203,12 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
 
               {needsApproval ? (
                 <button
-                onClick={handleApprove}
-                disabled={!canDeposit || txState.status === TransactionStatus.PENDING}
-                className="w-full bg-transparent border-2 border-defi-accent text-defi-accent hover:bg-defi-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed font-bold py-4 px-4 uppercase tracking-widest transition-all flex items-center justify-center gap-2 text-sm"
-              >
-                Approve Token
-              </button>
+                  onClick={handleApprove}
+                  disabled={!canDeposit || txState.status === TransactionStatus.PENDING}
+                  className="w-full bg-transparent border-2 border-defi-accent text-defi-accent hover:bg-defi-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed font-bold py-4 px-4 uppercase tracking-widest transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  Approve Token
+                </button>
               ) : (
                 <button
                   onClick={handleDeposit}
@@ -228,7 +227,7 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
               {/* Active Positions */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Active Positions</h3>
-                
+
                 {user.deposits.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-defi-700 bg-black">
                     <Lock className="h-8 w-8 mx-auto mb-3 text-defi-700" />
@@ -242,18 +241,17 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
                       const daysLeft = Math.ceil((deposit.unlockDate - now) / (1000 * 60 * 60 * 24));
 
                       return (
-                        <div 
-                          key={deposit.id} 
+                        <div
+                          key={deposit.id}
                           className="bg-black border border-defi-700 p-4 hover:border-gray-500 transition-colors group"
                         >
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <p className="text-xl font-bold text-white font-mono">${deposit.amount.toLocaleString()}</p>
-                              <p className="text-xs text-gray-500 uppercase font-bold mt-1">ID: {deposit.id.substring(0,8)}</p>
+                              <p className="text-xs text-gray-500 uppercase font-bold mt-1">ID: {deposit.id.substring(0, 8)}</p>
                             </div>
-                            <div className={`px-2 py-1 text-xs font-bold uppercase border ${
-                              isLocked ? 'border-warning text-warning' : 'border-success text-success'
-                            }`}>
+                            <div className={`px-2 py-1 text-xs font-bold uppercase border ${isLocked ? 'border-warning text-warning' : 'border-success text-success'
+                              }`}>
                               {isLocked ? `${daysLeft} DAYS LOCK` : 'UNLOCKED'}
                             </div>
                           </div>
@@ -266,11 +264,10 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
                           <button
                             onClick={() => initiateWithdraw(deposit)}
                             disabled={txState.status === TransactionStatus.PENDING}
-                            className={`w-full text-xs font-bold uppercase tracking-wider py-3 border transition-colors flex justify-center items-center gap-2 ${
-                              isLocked 
-                                ? 'border-warning text-warning hover:bg-warning hover:text-white'
-                                : 'border-white text-white hover:bg-white hover:text-black'
-                            }`}
+                            className={`w-full text-xs font-bold uppercase tracking-wider py-3 border transition-colors flex justify-center items-center gap-2 ${isLocked
+                              ? 'border-warning text-warning hover:bg-warning hover:text-white'
+                              : 'border-white text-white hover:bg-white hover:text-black'
+                              }`}
                           >
                             {isLocked && <AlertTriangle className="h-3 w-3" />}
                             {isLocked ? 'Early Withdraw' : 'Withdraw Funds'}
@@ -285,29 +282,29 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
               {/* Transaction History Section */}
               <div className="border-t border-defi-700 pt-8">
                 <div className="flex items-center justify-between mb-4">
-                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                     <History className="h-4 w-4" />
-                     Recent Transactions
-                   </h3>
-                   <div className="flex gap-2">
-                     <button 
-                       disabled={historyPage === 1}
-                       onClick={() => setHistoryPage(p => p - 1)}
-                       className="p-1 border border-defi-700 hover:bg-white hover:text-black disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-current transition-colors"
-                     >
-                       <ArrowLeft className="h-4 w-4" />
-                     </button>
-                     <span className="text-xs font-mono py-1 px-2 border border-defi-700 bg-black">
-                       {historyPage}/{Math.max(1, totalHistoryPages)}
-                     </span>
-                     <button 
-                       disabled={historyPage >= totalHistoryPages}
-                       onClick={() => setHistoryPage(p => p + 1)}
-                       className="p-1 border border-defi-700 hover:bg-white hover:text-black disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-current transition-colors"
-                     >
-                       <ArrowRight className="h-4 w-4" />
-                     </button>
-                   </div>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                    <History className="h-4 w-4" />
+                    Recent Transactions
+                  </h3>
+                  <div className="flex gap-2">
+                    <button
+                      disabled={historyPage === 1}
+                      onClick={() => setHistoryPage(p => p - 1)}
+                      className="p-1 border border-defi-700 hover:bg-white hover:text-black disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-current transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs font-mono py-1 px-2 border border-defi-700 bg-black">
+                      {historyPage}/{Math.max(1, totalHistoryPages)}
+                    </span>
+                    <button
+                      disabled={historyPage >= totalHistoryPages}
+                      onClick={() => setHistoryPage(p => p + 1)}
+                      className="p-1 border border-defi-700 hover:bg-white hover:text-black disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-current transition-colors"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-black border border-defi-700">
@@ -320,12 +317,12 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
                   {currentHistory.length > 0 ? (
                     currentHistory.map((tx) => (
                       <div key={tx.id} className="grid grid-cols-4 gap-2 p-3 border-b border-defi-700/50 last:border-0 hover:bg-defi-800 transition-colors text-xs font-mono">
-                         <span className={tx.type === 'DEPOSIT' ? 'text-success' : 'text-danger'}>
-                           {tx.type}
-                         </span>
-                         <span className="text-white">${tx.amount.toLocaleString()}</span>
-                         <span className="text-right text-gray-400">{new Date(tx.timestamp).toLocaleDateString()}</span>
-                         <span className="text-right text-gray-500">{tx.hash}</span>
+                        <span className={tx.type === 'DEPOSIT' ? 'text-success' : 'text-danger'}>
+                          {tx.type}
+                        </span>
+                        <span className="text-white">${tx.amount.toLocaleString()}</span>
+                        <span className="text-right text-gray-400">{new Date(tx.timestamp).toLocaleDateString()}</span>
+                        <span className="text-right text-gray-500">{tx.hash}</span>
                       </div>
                     ))
                   ) : (
@@ -341,8 +338,8 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
       </div>
 
       {/* Confirmation Modal */}
-      <Modal 
-        isOpen={!!depositToWithdraw} 
+      <Modal
+        isOpen={!!depositToWithdraw}
         onClose={() => setDepositToWithdraw(null)}
         title={withdrawalDetails?.isEarly ? "EARLY WITHDRAWAL" : "CONFIRM WITHDRAWAL"}
       >
@@ -369,7 +366,7 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
                 <span className="text-gray-400">INTEREST</span>
                 <span className="text-success">+${depositToWithdraw.accruedInterest.toFixed(2)}</span>
               </div>
-              
+
               {withdrawalDetails.isEarly && (
                 <div className="flex justify-between items-center border-t border-defi-700 pt-2 text-danger">
                   <span>PENALTY</span>
@@ -388,13 +385,13 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
               <div className="pt-2">
                 <label className="flex items-start gap-4 cursor-pointer group p-2 hover:bg-defi-700 transition-colors border border-transparent hover:border-defi-700">
                   <div className="relative flex items-center mt-1">
-                    <input 
+                    <input
                       type="checkbox"
                       className="peer h-5 w-5 cursor-pointer appearance-none border border-white bg-black checked:bg-defi-accent checked:border-defi-accent transition-all"
                       checked={acknowledgePenalty}
                       onChange={(e) => setAcknowledgePenalty(e.target.checked)}
                     />
-                     <CheckCircle className="absolute left-0.5 top-0.5 h-4 w-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                    <CheckCircle className="absolute left-0.5 top-0.5 h-4 w-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
                   </div>
                   <span className="text-xs text-gray-400 font-bold uppercase leading-relaxed group-hover:text-white transition-colors select-none">
                     I ACKNOWLEDGE THE FORFEITURE OF <span className="text-danger">${withdrawalDetails.penalty.toFixed(2)}</span>.
@@ -413,11 +410,10 @@ export const DepositWithdraw: React.FC<Props> = ({ stats, user, onUpdate }) => {
               <button
                 onClick={handleWithdrawConfirm}
                 disabled={withdrawalDetails.isEarly && !acknowledgePenalty}
-                className={`flex-1 py-3 font-bold uppercase tracking-wider text-sm transition-all flex items-center justify-center gap-2 ${
-                  withdrawalDetails.isEarly 
-                    ? (acknowledgePenalty ? 'bg-danger text-white hover:bg-red-600' : 'bg-defi-700 text-gray-500 cursor-not-allowed')
-                    : 'bg-defi-accent hover:bg-white hover:text-black text-white'
-                }`}
+                className={`flex-1 py-3 font-bold uppercase tracking-wider text-sm transition-all flex items-center justify-center gap-2 ${withdrawalDetails.isEarly
+                  ? (acknowledgePenalty ? 'bg-danger text-white hover:bg-red-600' : 'bg-defi-700 text-gray-500 cursor-not-allowed')
+                  : 'bg-defi-accent hover:bg-white hover:text-black text-white'
+                  }`}
               >
                 {withdrawalDetails.isEarly ? 'Accept & Withdraw' : 'Confirm'}
               </button>
