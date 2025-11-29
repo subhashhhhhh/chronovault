@@ -5,7 +5,7 @@ import { http } from 'wagmi';
 
 export const config = getDefaultConfig({
     appName: 'ChronoVault',
-    projectId: 'YOUR_PROJECT_ID', // Get one from WalletConnect Cloud
+    projectId: '7a146f4955510ef2697c4c0c341ef257', // Get one from WalletConnect Cloud
     chains: [sepolia],
     transports: {
         [sepolia.id]: http(),

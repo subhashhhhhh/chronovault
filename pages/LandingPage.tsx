@@ -23,14 +23,13 @@ const FeatureCard = ({ icon: Icon, title, description, isFuture = false }: any) 
     </motion.div>
 );
 
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+
 export const LandingPage = () => {
     const navigate = useNavigate();
-    const { connectWallet, user } = useVault();
+    const { user } = useVault();
 
-    const handleEnter = async () => {
-        if (!user) {
-            await connectWallet();
-        }
+    const handleEnter = () => {
         navigate('/dashboard');
     };
 
@@ -53,12 +52,53 @@ export const LandingPage = () => {
                             ChronoVault<span className="text-defi-accent">.</span>
                         </span>
                     </div>
-                    <button
-                        onClick={handleEnter}
-                        className="px-6 py-2 border border-white hover:bg-white hover:text-black transition-all font-mono text-sm uppercase tracking-wider"
-                    >
-                        {user ? 'Enter Dashboard' : 'Connect Wallet'}
-                    </button>
+                    <ConnectButton.Custom>
+                        {({
+                            account,
+                            chain,
+                            openAccountModal,
+                            openChainModal,
+                            openConnectModal,
+                            authenticationStatus,
+                            mounted,
+                        }) => {
+                            const ready = mounted && authenticationStatus !== 'loading';
+                            const connected =
+                                ready &&
+                                account &&
+                                chain &&
+                                (!authenticationStatus ||
+                                    authenticationStatus === 'authenticated');
+
+                            return (
+                                <div
+                                    {...(!ready && {
+                                        'aria-hidden': true,
+                                        'style': {
+                                            opacity: 0,
+                                            pointerEvents: 'none',
+                                            userSelect: 'none',
+                                        },
+                                    })}
+                                >
+                                    {(() => {
+                                        if (!connected) {
+                                            return (
+                                                <button onClick={openConnectModal} className="px-6 py-2 border border-white hover:bg-white hover:text-black transition-all font-mono text-sm uppercase tracking-wider">
+                                                    Connect Wallet
+                                                </button>
+                                            );
+                                        }
+                                        return (
+                                            <button onClick={() => navigate('/dashboard')} className="px-6 py-2 border border-white hover:bg-white hover:text-black transition-all font-mono text-sm uppercase tracking-wider">
+                                                Enter Dashboard
+                                            </button>
+                                        );
+                                    })()}
+                                </div>
+                            );
+                        }}
+                    </ConnectButton.Custom>
                 </div>
             </nav>
 

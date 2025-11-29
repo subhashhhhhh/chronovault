@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi';
+import { sepolia } from 'wagmi/chains';
 import { formatUnits, parseUnits } from 'viem';
 import { UserAccount, VaultStats, Deposit } from '../types';
 import { CHRONO_VAULT_ADDRESS, CHRONO_VAULT_ABI, MOCK_TOKEN_ADDRESS, MOCK_TOKEN_ABI } from '../config/contracts';
@@ -108,7 +109,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
                 address: MOCK_TOKEN_ADDRESS as `0x${string}`,
                 abi: MOCK_TOKEN_ABI,
                 functionName: 'approve',
-                args: [CHRONO_VAULT_ADDRESS as `0x${string}`, amountBigInt]
+                args: [CHRONO_VAULT_ADDRESS as `0x${string}`, amountBigInt],
+                account: address,
+                chain: sepolia
             });
             await refreshData();
         } catch (error) {
@@ -128,7 +131,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
                 address: CHRONO_VAULT_ADDRESS as `0x${string}`,
                 abi: CHRONO_VAULT_ABI,
                 functionName: 'deposit',
-                args: [amountBigInt, BigInt(365)] // Hardcoded 365 days for now
+                args: [amountBigInt, BigInt(365)], // Hardcoded 365 days for now
+                account: address,
+                chain: sepolia
             });
 
             await refreshData();
@@ -148,7 +153,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
                 address: CHRONO_VAULT_ADDRESS as `0x${string}`,
                 abi: CHRONO_VAULT_ABI,
                 functionName: 'withdraw',
-                args: [BigInt(index)]
+                args: [BigInt(index)],
+                account: address,
+                chain: sepolia
             });
             await refreshData();
         } catch (error) {

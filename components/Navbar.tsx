@@ -1,16 +1,15 @@
 import React from 'react';
 import { Wallet, Shield } from './ui/Icons';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 interface NavbarProps {
   isConnected: boolean;
   address?: string;
-  onConnect: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   isConnected,
-  address,
-  onConnect
+  address
 }) => {
   const formatAddress = (addr: string) => `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
 
@@ -30,16 +29,73 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
-            <button
-              onClick={onConnect}
-              className={`flex items-center gap-2 px-5 py-2 rounded-sm font-bold text-sm uppercase tracking-wide border transition-all duration-200 ${isConnected
-                  ? 'bg-black text-white border-defi-700'
-                  : 'bg-defi-accent hover:bg-white hover:text-black hover:border-white border-defi-accent text-white'
-                }`}
-            >
-              <Wallet className="h-4 w-4" />
-              {isConnected && address ? formatAddress(address) : 'Connect Wallet'}
-            </button>
+            <ConnectButton.Custom>
+              {({
+                account,
+                chain,
+                openAccountModal,
+                openChainModal,
+                openConnectModal,
+                authenticationStatus,
+                mounted,
+              }) => {
+                const ready = mounted && authenticationStatus !== 'loading';
+                const connected =
+                  ready &&
+                  account &&
+                  chain &&
+                  (!authenticationStatus ||
+                    authenticationStatus === 'authenticated');
+
+                return (
+                  <div
+                    {...(!ready && {
+                      'aria-hidden': true,
+                      'style': {
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                      },
+                    })}
+                  >
+                    {(() => {
+                      if (!connected) {
+                        return (
+                          <button
+                            onClick={openConnectModal}
+                            className="flex items-center gap-2 px-5 py-2 rounded-sm font-bold text-sm uppercase tracking-wide border transition-all duration-200 bg-defi-accent hover:bg-white hover:text-black hover:border-white border-defi-accent text-white"
+                          >
+                            <Wallet className="h-4 w-4" />
+                            Connect Wallet
+                          </button>
+                        );
+                      }
+
+                      if (chain.unsupported) {
+                        return (
+                          <button
+                            onClick={openChainModal}
+                            className="flex items-center gap-2 px-5 py-2 rounded-sm font-bold text-sm uppercase tracking-wide border transition-all duration-200 bg-red-500 text-white border-red-500 hover:bg-red-600"
+                          >
+                            Wrong Network
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <button
+                          onClick={openAccountModal}
+                          className="flex items-center gap-2 px-5 py-2 rounded-sm font-bold text-sm uppercase tracking-wide border transition-all duration-200 bg-black text-white border-defi-700 hover:border-defi-accent"
+                        >
+                          <Wallet className="h-4 w-4" />
+                          {account.displayName}
+                        </button>
+                      );
+                    })()}
+                  </div>
+                );
+              }}
+            </ConnectButton.Custom>
           </div>
         </div>
       </div>

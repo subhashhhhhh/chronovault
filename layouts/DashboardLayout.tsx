@@ -5,14 +5,13 @@ import { useVault } from '../context/VaultContext';
 import { LayoutDashboard, Vault, Settings, ShieldAlert, Zap, Activity, History } from '../components/ui/Icons';
 
 export const DashboardLayout = () => {
-    const { user, connectWallet } = useVault();
+    const { user } = useVault();
 
     return (
         <div className="min-h-screen bg-black text-gray-100 font-sans selection:bg-defi-accent selection:text-white flex flex-col">
             <Navbar
                 isConnected={!!user}
                 address={user?.address}
-                onConnect={connectWallet}
             />
 
             <div className="flex flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 gap-8">
